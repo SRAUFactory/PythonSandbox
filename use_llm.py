@@ -2,10 +2,7 @@ import requests
 import sys
 
 URL = "http://localhost:11434/v1/chat/completions"
-if sys.argv[1] == "gemma4":
-    MODEL = "gemma4:e4b"
-elif sys.argv[1] == "qwen2":
-    MODEL = "qwen2.5-coder:1.5b-base"
+MODEL = "gemma4:e4b"
 
 PROMPT = """10段の階段があります。
 1歩で1段または2段を上ることができます。
