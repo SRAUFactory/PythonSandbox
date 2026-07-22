@@ -1,6 +1,6 @@
-# CADの3大概念 (CSG, Constraint, Feature Hierarchy) のPython/CadQuery実装と解説
+# CADの3大概念 (CSG, Constraint, Feature Hierarchy) とAI生成パイプラインのPython/CadQuery実装と解説
 
-本ドキュメントは、CadQueryとPythonを用いて3D CADの基礎となる「CADの3大概念」を体得・解説するための実践ガイドです。
+本ドキュメントは、CadQueryとPythonを用いて3D CADの基礎となる「CADの3大概念」および最新の「AIによるCADコード自動生成パイプライン」を体得・解説するための実践ガイドです。
 
 ---
 
@@ -9,17 +9,19 @@
 2. [概念 1: CSG (Constructive Solid Geometry)](#概念-1-csg-constructive-solid-geometry)
 3. [概念 2: Constraint (拘束・パラメータ制約)](#概念-2-constraint-拘束パラメータ制約)
 4. [概念 3: Feature Hierarchy (フィーチャー履歴・順序依存性)](#概念-3-feature-hierarchy-フィーチャー履歴順序依存性)
-5. [環境構築とスクリプト実行方法](#環境構築とスクリプト実行方法)
+5. [概念 4: AI CADコード自動生成とパイプライン精緻化 (CADCoder)](#概念-4-ai-cadコード自動生成とパイプライン精緻化-cadcoder)
+6. [環境構築とスクリプト実行方法](#環境構築とスクリプト実行方法)
 
 ---
 
 ## 概要と概念マッピング
 
-| 概念 | 実装スクリプト | 生成STEPファイル | 主な学習・検証テーマ |
+| 概念 | 実装スクリプト | 生成STEP/STLファイル | 主な学習・検証テーマ |
 | :--- | :--- | :--- | :--- |
 | **CSG** | [`csg_demo.py`](./csg_demo.py) | `output_csg.step` | 基本立体（Box, Cylinder, Sphere）の集合演算（Union, Cut, Intersection）によるバルブボディ生成とB-Repトポロジー変化 |
 | **Constraint** | [`constraint_demo.py`](./constraint_demo.py) | `output_constraint.step` | 2Dスケッチ同心拘束とPCD円周等配拘束（`cq.Sketch` & `polarArray`）を用いたパラメータ可変フランジの設計 |
 | **Feature Hierarchy** | [`feature_hierarchy_demo.py`](./feature_hierarchy_demo.py) | `output_feature_hierarchy.step` | L字ブラケットの加工履歴チェーン構築、および「穴あけ→フィレット」と「フィレット→穴あけ」の順序依存性比較 |
+| **AI CAD Generation** | [`ai_cad_pipeline_demo.py`](./ai_cad_pipeline_demo.py) | `output_raw_ai.step`<br>`output_refined_ai.step`<br>`output_refined_ai.stl` | CADCoder等のVision-AIが生成した固定値コードを分析し、パラメータ化・公差 (Clearance)・DfAM面取りを追加する精緻化パイプライン |
 
 ---
 
@@ -107,6 +109,32 @@ pattern_b = base.edges().fillet(1.0).faces("<Y").workplane().cboreHole(...)
 
 ---
 
+## 概念 4: AI CADコード自動生成とパイプライン精緻化 (CADCoder)
+
+### 概要
+CADCoderなどのVision-AIモデルは、画像やスケッチから直接 CadQuery の Python コードを出力できます。しかし、AIが生み出す生のコード（Phase 1）は、座標値の固定値（ベタ書き）であり、変数が存在せず公差や3Dプリント向きの面取り（DfAM）が含まれていません。
+本アプローチでは、「AIでラフコードを高速生成」→「人間またはLLMでパラメータ化・公差・面取り補正（Phase 2）」という2段階パイプラインを構築・実践します。
+
+### コード解説 ([`ai_cad_pipeline_demo.py`](./ai_cad_pipeline_demo.py))
+```python
+# Phase 1: 生のAI生成コード（ベタ書き座標）
+wp = cq.Workplane("XY")
+sketch_loop = wp.moveTo(0, 0).lineTo(50, 0).lineTo(50, 15).lineTo(15, 15).lineTo(15, 50).lineTo(0, 50).close()
+raw_model = wp.add(sketch_loop).extrude(30.0).faces("<Y").workplane().pushPoints([(7.5, 15.0)]).hole(6.0)
+
+# Phase 2: パラメータ・公差(clearance=0.3mm)・DfAM面取り(chamfer)の追加
+actual_hole_diam = hole_diam + clearance  # 公差考慮
+sketch = cq.Sketch().segment((0, 0), (base_length, 0))...
+refined_model = base_solid.faces("<Y").workplane().pushPoints([...]).cboreHole(...).edges(">Z or <Z or >X or <X").chamfer(1.0)
+```
+
+### 検証結果（B-Repと出力の比較）
+- **Phase 1 (生のAIモデル)**: 面 9 個 / 辺 21 個 / 頂点 14 個 → STEP: [`output_raw_ai.step`](./output_raw_ai.step), STL: [`output_raw_ai.stl`](./output_raw_ai.stl)
+- **Phase 2 (精緻化モデル)**: 面 35 個 / 辺 68 個 / 頂点 36 個 → STEP: [`output_refined_ai.step`](./output_refined_ai.step), STL: [`output_refined_ai.stl`](./output_refined_ai.stl)
+- **結論**: AI生成コードをそのまま使うのではなく、変数の抽出と公差・面取りを追加するパイプラインを通すことで、一気に3Dプリント可能な高品質パーツへと昇華可能。
+
+---
+
 ## 環境構築とスクリプト実行方法
 
 ### 動作環境
@@ -122,6 +150,7 @@ cd /Users/araiyuuki/Documents/GitHub/PythonSandbox
 ./venv/bin/python csg_demo.py
 ./venv/bin/python constraint_demo.py
 ./venv/bin/python feature_hierarchy_demo.py
+./venv/bin/python ai_cad_pipeline_demo.py
 ```
 
-生成された `.step` ファイルは、FreeCAD、Onshape、Fusion360、CQ-Editorなどの 3D CADツールで閲覧・確認できます。
+生成された `.step` や `.stl` ファイルは、FreeCAD、Onshape、Fusion360、CQ-Editor、および各種スライサーソフト（Cura, PrusaSlicerなど）で閲覧・確認できます。
