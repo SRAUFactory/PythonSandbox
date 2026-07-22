@@ -18,10 +18,10 @@
 
 | 概念 | 実装スクリプト | 生成STEP/STLファイル | 主な学習・検証テーマ |
 | :--- | :--- | :--- | :--- |
-| **CSG** | [`csg_demo.py`](./csg_demo.py) | `output_csg.step` | 基本立体（Box, Cylinder, Sphere）の集合演算（Union, Cut, Intersection）によるバルブボディ生成とB-Repトポロジー変化 |
-| **Constraint** | [`constraint_demo.py`](./constraint_demo.py) | `output_constraint.step` | 2Dスケッチ同心拘束とPCD円周等配拘束（`cq.Sketch` & `polarArray`）を用いたパラメータ可変フランジの設計 |
-| **Feature Hierarchy** | [`feature_hierarchy_demo.py`](./feature_hierarchy_demo.py) | `output_feature_hierarchy.step` | L字ブラケットの加工履歴チェーン構築、および「穴あけ→フィレット」と「フィレット→穴あけ」の順序依存性比較 |
-| **AI CAD Generation** | [`ai_cad_pipeline_demo.py`](./ai_cad_pipeline_demo.py) | `output_raw_ai.step`<br>`output_refined_ai.step`<br>`output_refined_ai.stl` | CADCoder等のVision-AIが生成した固定値コードを分析し、パラメータ化・公差 (Clearance)・DfAM面取りを追加する精緻化パイプライン |
+| **CSG** | [`csg_demo.py`](./csg/csg_demo.py) | `./csg/output_csg.step` | 基本立体（Box, Cylinder, Sphere）の集合演算（Union, Cut, Intersection）によるバルブボディ生成とB-Repトポロジー変化 |
+| **Constraint** | [`constraint_demo.py`](./constraint/constraint_demo.py) | `./constraint/output_constraint.step` | 2Dスケッチ同心拘束とPCD円周等配拘束（`cq.Sketch` & `polarArray`）を用いたパラメータ可変フランジの設計 |
+| **Feature Hierarchy** | [`feature_hierarchy_demo.py`](./feature_hierarchy/feature_hierarchy_demo.py) | `./feature_hierarchy/output_feature_hierarchy.step` | L字ブラケットの加工履歴チェーン構築、および「穴あけ→フィレット」と「フィレット→穴あけ」の順序依存性比較 |
+| **AI CAD Generation** | [`ai_cad_pipeline_demo.py`](./ai_cad_pipeline/ai_cad_pipeline_demo.py) | `./ai_cad_pipeline/output_raw_ai.step`<br>`./ai_cad_pipeline/output_refined_ai.step`<br>`./ai_cad_pipeline/output_refined_ai.stl` | CADCoder等のVision-AIが生成した固定値コードを分析し、パラメータ化・公差 (Clearance)・DfAM面取りを追加する精緻化パイプライン |
 
 ---
 
@@ -33,7 +33,7 @@ CSGは、球・円柱・直方体などの「プリミティブ（基本立体�
 - **差 (Cut / Difference)**: 1つの立体から別の立体を削り取る（穴あけ・切削）。
 - **積 (Intersection)**: 重なる領域のみを抽出する。
 
-### コード解説 ([`csg_demo.py`](./csg_demo.py))
+### コード解説 ([`csg_demo.py`](./csg/csg_demo.py))
 ```python
 # 1. プリミティブ生成
 main_block = cq.Workplane("XY").box(40, 40, 40)
@@ -51,7 +51,7 @@ valve_body = combined.cut(h_bore)
 - **基本直方体**: 面 6 個 / 辺 12 個 / 頂点 8 個
 - **パイプ結合後 (Union)**: 面 12 個 / 辺 21 個 / 頂点 14 個
 - **貫通穴あけ後 (Cut)**: 面 16 個 / 辺 30 個 / 頂点 20 個
-- **フィレット仕上げ後**: 面 26 個 / 辺 50 個 / 頂点 30 個 → STEPファイル: [`output_csg.step`](./output_csg.step)
+- **フィレット仕上げ後**: 面 26 個 / 辺 50 個 / 頂点 30 個 → STEPファイル: [`output_csg.step`](./csg/output_csg.step)
 
 ---
 
@@ -60,7 +60,7 @@ valve_body = combined.cut(h_bore)
 ### 概要
 Constraint（拘束）は、「同心円状に配置する」「PCD（ピッチ円）上に角度等分配置する」といった幾何学的・寸法的なルールを数値や関係式として定義する考え方です。これにより、外径やボルト穴数を変更しても、設計意図（Design Intent）が損なわれることなく全体の形状が自動的に正しく更新されます。
 
-### コード解説 ([`constraint_demo.py`](./constraint_demo.py))
+### コード解説 ([`constraint_demo.py`](./constraint/constraint_demo.py))
 ```python
 # 2Dスケッチによる同心円拘束
 sketch = (
@@ -81,7 +81,7 @@ flange_with_holes = (
 ### 検証結果（パラメータ可変の実験）
 - **標準仕様 (6穴/外径120mm/PCD90mm)**: 面 18 個 / 辺 40 個 / 頂点 24 個
 - **大型仕様 (8穴/外径150mm/PCD120mm)**: 面 22 個 / 辺 50 個 / 頂点 30 個
-- パラメータを変更するだけで、中心軸基準の同心関係と円周等角配置が自動維持されることを実証。 → STEPファイル: [`output_constraint.step`](./output_constraint.step)
+- パラメータを変更するだけで、中心軸基準の同心関係と円周等角配置が自動維持されることを実証。 → STEPファイル: [`output_constraint.step`](./constraint/output_constraint.step)
 
 ---
 
@@ -91,7 +91,7 @@ flange_with_holes = (
 フィーチャー履歴（Feature Tree / Construction History）は、CADにおいて「スケッチを描く」→「押し出す」→「穴を開ける」→「角を丸める」といった操作を【実行順序を持つツリー構造】として保持する仕組みです。
 フィーチャーの並び順（評価順序）を変えると、トポロジー構造（境界表現である面や辺の接続関係）や幾何形状に大きな変化が生じます。
 
-### コード解説 ([`feature_hierarchy_demo.py`](./feature_hierarchy_demo.py))
+### コード解説 ([`feature_hierarchy_demo.py`](./feature_hierarchy/feature_hierarchy_demo.py))
 ```python
 # パターン A: 穴あけ加工を行ってから全体エッジにフィレット適用
 pattern_a = base.faces("<Y").workplane().cboreHole(...).edges().fillet(1.0)
@@ -105,7 +105,7 @@ pattern_b = base.edges().fillet(1.0).faces("<Y").workplane().cboreHole(...)
   - 穴が開けられた状態の境界線に対してフィレットが計算されるため、穴周りのエッジが多層的に交差し、**面: 62 個 / 辺: 126 個 / 頂点: 67 個** とトポロジーが複雑化。
 - **パターン B (`FilletAll` → `Hole`)**:
   - フィレットされた角丸め形状を円柱状に貫通して穴を開けるため、**面: 47 個 / 辺: 98 個 / 頂点: 54 個** と比較的シンプルな構造に収まる。
-- **結論**: CADプログラミングでは、コマンドの「呼び出し順序（Feature Hierarchy）」が最終ソリッドの品質や安定性に直結することを実証。 → STEPファイル: [`output_feature_hierarchy.step`](./output_feature_hierarchy.step)
+- **結論**: CADプログラミングでは、コマンドの「呼び出し順序（Feature Hierarchy）」が最終ソリッドの品質や安定性に直結することを実証。 → STEPファイル: [`output_feature_hierarchy.step`](./feature_hierarchy/output_feature_hierarchy.step)
 
 ---
 
@@ -115,7 +115,7 @@ pattern_b = base.edges().fillet(1.0).faces("<Y").workplane().cboreHole(...)
 CADCoderなどのVision-AIモデルは、画像やスケッチから直接 CadQuery の Python コードを出力できます。しかし、AIが生み出す生のコード（Phase 1）は、座標値の固定値（ベタ書き）であり、変数が存在せず公差や3Dプリント向きの面取り（DfAM）が含まれていません。
 本アプローチでは、「AIでラフコードを高速生成」→「人間またはLLMでパラメータ化・公差・面取り補正（Phase 2）」という2段階パイプラインを構築・実践します。
 
-### コード解説 ([`ai_cad_pipeline_demo.py`](./ai_cad_pipeline_demo.py))
+### コード解説 ([`ai_cad_pipeline_demo.py`](./ai_cad_pipeline/ai_cad_pipeline_demo.py))
 ```python
 # Phase 1: 生のAI生成コード（ベタ書き座標）
 wp = cq.Workplane("XY")
@@ -129,8 +129,8 @@ refined_model = base_solid.faces("<Y").workplane().pushPoints([...]).cboreHole(.
 ```
 
 ### 検証結果（B-Repと出力の比較）
-- **Phase 1 (生のAIモデル)**: 面 9 個 / 辺 21 個 / 頂点 14 個 → STEP: [`output_raw_ai.step`](./output_raw_ai.step), STL: [`output_raw_ai.stl`](./output_raw_ai.stl)
-- **Phase 2 (精緻化モデル)**: 面 35 個 / 辺 68 個 / 頂点 36 個 → STEP: [`output_refined_ai.step`](./output_refined_ai.step), STL: [`output_refined_ai.stl`](./output_refined_ai.stl)
+- **Phase 1 (生のAIモデル)**: 面 9 個 / 辺 21 個 / 頂点 14 個 → STEP: [`output_raw_ai.step`](./ai_cad_pipeline/output_raw_ai.step), STL: [`output_raw_ai.stl`](./ai_cad_pipeline/output_raw_ai.stl)
+- **Phase 2 (精緻化モデル)**: 面 35 個 / 辺 68 個 / 頂点 36 個 → STEP: [`output_refined_ai.step`](./ai_cad_pipeline/output_refined_ai.step), STL: [`output_refined_ai.stl`](./ai_cad_pipeline/output_refined_ai.stl)
 - **結論**: AI生成コードをそのまま使うのではなく、変数の抽出と公差・面取りを追加するパイプラインを通すことで、一気に3Dプリント可能な高品質パーツへと昇華可能。
 
 ---
@@ -147,10 +147,11 @@ refined_model = base_solid.faces("<Y").workplane().pushPoints([...]).cboreHole(.
 cd /Users/araiyuuki/Documents/GitHub/PythonSandbox
 
 # スクリプトの実行
-./venv/bin/python csg_demo.py
-./venv/bin/python constraint_demo.py
-./venv/bin/python feature_hierarchy_demo.py
-./venv/bin/python ai_cad_pipeline_demo.py
+./venv/bin/python b_rep/b_rep.py
+./venv/bin/python csg/csg_demo.py
+./venv/bin/python constraint/constraint_demo.py
+./venv/bin/python feature_hierarchy/feature_hierarchy_demo.py
+./venv/bin/python ai_cad_pipeline/ai_cad_pipeline_demo.py
 ```
 
 生成された `.step` や `.stl` ファイルは、FreeCAD、Onshape、Fusion360、CQ-Editor、および各種スライサーソフト（Cura, PrusaSlicerなど）で閲覧・確認できます。
