@@ -14,24 +14,14 @@ computer = random.randint(GU, PA)
 print(f"コンピュータの手-->{computer}")
 
 # 勝敗を判定する
-if user == GU and computer == GU:
+if user == computer:
     result = "あいこ"
-elif user == GU and computer == CHOKI:
+elif user == GU and computer == CHOKI or \
+     user == CHOKI and computer == PA or \
+     user == PA and computer == GU:
     result = "ユーザーの勝ち"
-elif user == GU and computer == PA:
+else:
     result = "ユーザーの負け"
-elif user == CHOKI and computer == GU:
-    result = "ユーザーの負け"
-elif user == CHOKI and computer == CHOKI:
-    result = "あいこ"
-elif user == CHOKI and computer == PA:
-    result = "ユーザーの勝ち"
-elif user == PA and computer == GU:
-    result = "ユーザーの勝ち"
-elif user == PA and computer == CHOKI:
-    result = "ユーザーの負け"
-elif user == PA and computer == PA:
-    result = "あいこ"
 
 # 勝敗の判定結果を表示する
 print(result)
