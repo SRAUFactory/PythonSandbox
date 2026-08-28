@@ -1,9 +1,5 @@
+result = ["", "Fizz", "Buzz", "FizzBuzz"]
+fmt = ["{0:d}", "", "", ""]
 for num in range(1, 101):
-    result = ""
-    if num % 3 == 0:
-        result += "Fizz"
-    if num % 5 == 0:
-        result += "Buzz"
-    if result == "":
-        result += str(num)
-    print(result)
+    idx = (num - 1) % 3 // 2 + (num - 1) % 5 // 4 * 2
+    print(result[idx] + fmt[idx].format(num))
