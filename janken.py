@@ -6,6 +6,9 @@ GU = 0
 CHOKI = 1
 PA = 2
 
+# 勝敗の判定結果を格納した配列を用意しておく
+result = ["あいこ", "ユーザーの負け", "ユーザーの勝ち"]
+
 # ユーザーはキー入力で手を選ぶ
 user = int(input("ユーザーの手-->"))
 
@@ -14,14 +17,7 @@ computer = random.randint(GU, PA)
 print(f"コンピュータの手-->{computer}")
 
 # 勝敗を判定する
-if user == computer:
-    result = "あいこ"
-elif user == GU and computer == CHOKI or \
-     user == CHOKI and computer == PA or \
-     user == PA and computer == GU:
-    result = "ユーザーの勝ち"
-else:
-    result = "ユーザーの負け"
+idx = (user - computer + 3) % 3
 
 # 勝敗の判定結果を表示する
-print(result)
+print(result[idx])
