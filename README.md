@@ -27,6 +27,8 @@ PythonSandbox/
 │   ├── output_refined_ai.step
 │   └── output_refined_ai.stl
 ├── mongodb_sample/
+├── janken.py
+├── fizzbuzz.py
 └── use_llm.py
 ```
 
@@ -37,6 +39,10 @@ PythonSandbox/
   - [`constraint/constraint_demo.py`](./constraint/constraint_demo.py): 2D/3D拘束とパラメータ可変配管フランジ設計
   - [`feature_hierarchy/feature_hierarchy_demo.py`](./feature_hierarchy/feature_hierarchy_demo.py): フィーチャー加工履歴と順序依存性の検証
   - [`ai_cad_pipeline/ai_cad_pipeline_demo.py`](./ai_cad_pipeline/ai_cad_pipeline_demo.py): CADCoder（Vision-AI）が生成したコードの受領と、パラメータ・公差・DfAM面取り補正パイプライン
+
+### アルゴリズムと改良テクニック（日経ソフトウェア 2023年5月号 連載）
+- [`janken.py`](./janken.py): if分岐をなくすじゃんけん勝敗判定アルゴリズム（`(user - computer + 3) % 3`）
+- [`fizzbuzz.py`](./fizzbuzz.py): if分岐をなくすFizzBuzzアルゴリズム（剰余・整数除算と書式指定文字列によるインデックスマッピング）
 
 ### その他
 - [`use_llm.py`](./use_llm.py): LLM API試作スクリプト
